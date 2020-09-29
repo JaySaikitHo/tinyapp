@@ -29,7 +29,7 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-//update the database
+//creating a new url
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   // res.send("Ok");// Respond with 'Ok' (we will replace this)
@@ -41,6 +41,7 @@ app.post("/urls", (req, res) => {
  
   res.redirect(`/urls/${templateVars.shortURL}`)
 });
+
 //goes to the form for creating a new URL
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
@@ -49,23 +50,32 @@ app.get("/urls/new", (req, res) => {
 //browse the url database
 app.get("/urls", (req, res) => {
   const templateVars = { urls : urlDatabase }//this makes an object called urls with a single object with the data from the urlDatabase.
-  console.log(templateVars)
+  console.log(templateVars);
   res.render("urls_index", templateVars)
 });
 //read a specific url
 app.get("/urls/:shortURL", (req, res) => {
-  const tinyURL = req.params.shortURL
+  const tinyURL = req.params.shortURL;
   const templateVars= { shortURL: tinyURL, longURL: urlDatabase[tinyURL] }
   res.render("urls_show", templateVars);
 });
 
-//redirect to the website from the shortened URL
+//redirect to the actual website from the shortened URL
 app.get("/u/:shortURL", (req, res) => {
-  const tinyURL = req.params.shortURL
-  const longURL = urlDatabase[tinyURL] 
+  const tinyURL = req.params.shortURL;
+  const longURL = urlDatabase[tinyURL];
   res.redirect(longURL);
 });
-
+//edit the longURL 
+app.post("/urls/:shortURL", (req, res) =>{
+  const tinyURL = req.params.shortURL;
+  const newName = req.body.longURL;
+  urlDatabase[tinyURL] = newName;
+  // console.log(req.params.shortURL)
+  // console.log(req.body.longURL)
+  res.redirect("/urls");
+});
+//delete an URL
 app.post("/urls/:url/delete", (req, res) => {
   
   delete urlDatabase[req.params.url]
