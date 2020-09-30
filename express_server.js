@@ -18,8 +18,20 @@ function generateRandomString() {
   }
   return random;
 }
-
-
+//seed data for user database
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+//seed data for URL database
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -43,8 +55,24 @@ app.post("/login", (req,res) => {
 
 //logout
 app.post("/logout",(req,res) => {
-res.clearCookie("username")
-res.redirect("/urls")
+res.clearCookie("username");
+res.redirect("/urls");
+})
+
+//sign up route
+app.get("/register",(req,res) => {
+res.render("urls_register");
+})
+
+//registering user
+app.post("/register",(req,res) => {
+let userEmail = req.body.email;
+let userPassword = req.body.password;
+let userId = generateRandomString();
+users[userId] = {id: userId, email: userEmail, password: userPassword};
+res.cookie("user_id", userId );
+console.log(users)
+res.redirect('/urls');
 })
 
 //creating a new url
