@@ -2,8 +2,12 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser")
+
 
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
+
 app.set("view engine", "ejs");
 
 function generateRandomString() {
@@ -29,6 +33,14 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+//login
+app.post("/login", (req,res) => {
+  const logInName = req.body.username
+  console.log(logInName)
+  res.cookie("username", logInName )
+  res.redirect("/urls")
+});
+
 //creating a new url
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
@@ -44,19 +56,21 @@ app.post("/urls", (req, res) => {
 
 //goes to the form for creating a new URL
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"]}
+  res.render("urls_new", templateVars);
 });
 
 //browse the url database
 app.get("/urls", (req, res) => {
-  const templateVars = { urls : urlDatabase }//this makes an object called urls with a single object with the data from the urlDatabase.
+  const templateVars = { urls : urlDatabase, username: req.cookies["username"] }//this makes an object called urls with a single object with the data from the urlDatabase.
   console.log(templateVars);
+  // req.cookies[username]
   res.render("urls_index", templateVars)
 });
 //read a specific url
 app.get("/urls/:shortURL", (req, res) => {
   const tinyURL = req.params.shortURL;
-  const templateVars= { shortURL: tinyURL, longURL: urlDatabase[tinyURL] }
+  const templateVars= { shortURL: tinyURL, longURL: urlDatabase[tinyURL], username: req.cookies["username"] }
   res.render("urls_show", templateVars);
 });
 
