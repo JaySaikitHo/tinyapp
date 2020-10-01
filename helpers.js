@@ -16,7 +16,7 @@ const getUserByEmail = function (usersDB,email){
        return usersDB[key];
     }
   }
-  return null;
+  return undefined;
 }
 
 
@@ -25,7 +25,7 @@ const urlsForUser = function(id){
      
   let privateDatabase = {};
     for(let key in urlDatabase){
-       if(urlDatabase[key].UserID === id){
+       if(urlDatabase[key].urlID === id){
         
         privateDatabase[key] = urlDatabase[key];
       }   

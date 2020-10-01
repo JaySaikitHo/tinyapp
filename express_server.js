@@ -28,7 +28,7 @@ const urlsForUser = function(id){
      
   let privateDatabase = {};
     for(let key in urlDatabase){
-       if(urlDatabase[key].UserID === id){
+       if(urlDatabase[key].urlID === id){
         
         privateDatabase[key] = urlDatabase[key];
       }   
@@ -51,8 +51,8 @@ const users = {
 }
 //seed data for URL database
 const urlDatabase = {
-  "b2xVn2": {longURL: "http://www.lighthouselabs.ca", UserID: "userRandomID"}, 
-  "9sm5xK": {longURL: "http://www.google.com", UserID: "user2RandomID"}
+  "b2xVn2": {longURL: "http://www.lighthouselabs.ca", urlID: "userRandomID"}, 
+  "9sm5xK": {longURL: "http://www.google.com", urlID: "user2RandomID"}
 };
 //landing page
 app.get("/", (req, res) => {
@@ -62,8 +62,12 @@ app.get("/", (req, res) => {
 //render log in page
 app.get("/login", (req, res) =>{
   const user = users[req.session.user_id];
+  if(!user){
   const templateVars = { user: user }
-    res.render("urls_login",templateVars)
+    res.render("urls_login",templateVars) 
+  } else {
+    res.redirect("/urls")
+  }  
 })
 
 //login
@@ -95,8 +99,12 @@ res.redirect("/urls");
 //register route
 app.get("/register",(req,res) => {
   const user = users[req.session.user_id];
-  const templateVars = { user: user }
-  res.render("urls_register", templateVars);
+  if(user){
+      res.redirect("/urls")
+  }else{
+    const templateVars = { user: user }
+    res.render("urls_register", templateVars);
+  }
 })
 
 //registering user
@@ -127,7 +135,7 @@ app.post("/urls", (req, res) => {
     let randomString = generateRandomString() // to generate a random id
     const fullURL = req.body.longURL
     const templateVars = { shortURL: randomString, longURL: fullURL }   // don't need params because it is coming from the body not the browser      
-    urlDatabase[templateVars.shortURL] = {longURL: templateVars.longURL, UserID: user["id"]}
+    urlDatabase[templateVars.shortURL] = {longURL: templateVars.longURL, urlID: user["id"]}
 
     console.log(urlDatabase)
     res.redirect(`/urls/${templateVars.shortURL}`)
@@ -162,8 +170,8 @@ app.get("/urls", (req, res) => {
     // console.log(templateVars);
     res.render("urls_index", templateVars)
   } else {
-    res.status(403)
-    res.redirect("/login")
+    res.status(403).send("You need to be logged in")
+    
   }
 });
 
@@ -172,8 +180,18 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const tinyURL = req.params.shortURL;
   const user = users[req.session.user_id];
-  const templateVars= { shortURL: tinyURL, longURL: urlDatabase[tinyURL].longURL, user: user["email"] }
-  res.render("urls_show", templateVars);
+  if(user){
+      console.log(user.id,urlDatabase[tinyURL].urlID)
+    if(user.id !== urlDatabase[tinyURL].urlID){
+        res.status(403).send("You don't have permission to do that")
+      } else{
+      const templateVars= { shortURL: tinyURL, longURL: urlDatabase[tinyURL].longURL, user: user["email"] }
+    res.render("urls_show", templateVars);
+    } 
+  
+  }else {
+    res.status(403).send("You need to be logged in")
+  }
 });
 
 
