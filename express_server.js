@@ -1,11 +1,12 @@
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
 const { response } = require("express");
+const {generateRandomString,getUserByEmail} = require("./helpers");
 
+const PORT = 8080; // default port 8080
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
@@ -18,34 +19,9 @@ app.use(cookieSession({
 
 app.set("view engine", "ejs");
 
-//random string generator for id
-const generateRandomString = function(){
-  let random = "";
-  const characters = 'abcdefghijklmnopqrstuvwxyz1234567890'
-  for (let i = 0; i < 6; i++){
-    random += characters.charAt(Math.random() * characters.length);
-  }
-  return random;
-}
-//check if email is already registered
-const checkEmail = function (usersDb, inputEmail){
-  for (let key in usersDb){
-      if(usersDb[key].email === inputEmail){
-      return true;
-    }
-  }
-  return false;
-}
 
-//check if password and email match at login
-const getLoginUser = function (usersDB,logInName,loginPassWord){
-  for(let key in usersDB){
-    if(usersDB[key].email === logInName &&  bcrypt.compareSync(loginPassWord,usersDB[key].password)){
-       return usersDB[key];
-    }
-  }
-  return null;
-}
+
+
 
 //check ids of users and urls to return an object with only urls the user created
 const urlsForUser = function(id){
@@ -92,16 +68,19 @@ app.get("/login", (req, res) =>{
 
 //login
 app.post("/login", (req,res) => {
-  const logInName = req.body.username
+  const email = req.body.username
   const loginPassWord = req.body.password
-  const user = getLoginUser(users,logInName,loginPassWord)
+  const user = getUserByEmail(users,email)
   console.log(user)
   if(user){
-        
-    req.session.user_id = user.id;
-    res.redirect("/urls");
+    if(bcrypt.compareSync(loginPassWord,user.password)){
+        req.session.user_id = user.id;
+        res.redirect("/urls")
+    } else {
+    res.status(403).send("Sorry incorrect password")
+  }
   } else {
-    res.status(403).send("User and or password do not match")
+    res.status(403).send("Sorry this user doesn't exist")
     
   }  
 });
@@ -128,7 +107,7 @@ const UserPassword = req.body.password;
 const hashedPassword = bcrypt.hashSync(UserPassword,10);  
   if(!userEmail || !UserPassword){
      res.status(400).send("Invalid email or password");
-  } else if(checkEmail(users, userEmail)){
+  } else if(getUserByEmail(users, userEmail)){
     res.status(400).send("Email already taken");
         
   } else {
