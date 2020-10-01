@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const bcrypt = require('bcrypt');
 const { response } = require("express");
 
 
@@ -33,7 +34,7 @@ const checkEmail = function (usersDb, inputEmail){
 //check if password and email match at login
 const getLoginUser = function (usersDB,logInName,loginPassWord){
   for(let key in usersDB){
-    if(usersDB[key].email === logInName && usersDB[key].password === loginPassWord){
+    if(usersDB[key].email === logInName &&  bcrypt.compareSync(loginPassWord,usersDB[key].password)){
        return usersDB[key];
     }
   }
@@ -58,12 +59,12 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "123"
+    password: bcrypt.hashSync("abc",10)
   },
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "123"
+    password: bcrypt.hashSync("123",10)
   }
 }
 //seed data for URL database
@@ -116,16 +117,18 @@ app.get("/register",(req,res) => {
 //registering user
 app.post("/register",(req,res) => {
 
-let userEmail = req.body.email;
-let userPassword = req.body.password;
-  if(!userEmail || !userPassword){
+const userEmail = req.body.email;
+const UserPassword = req.body.password;
+const hashedPassword = bcrypt.hashSync(UserPassword,10);  
+  if(!userEmail || !UserPassword){
      res.status(400).send("Invalid email or password");
   } else if(checkEmail(users, userEmail)){
     res.status(400).send("Email already taken");
         
   } else {
     const userId = generateRandomString();
-    users[userId] = {id: userId, email: userEmail, password: userPassword};
+    users[userId] = {id: userId, email: userEmail, password: hashedPassword};
+    
     res.cookie("user_id", userId)
     res.redirect("/urls");
   }
@@ -167,8 +170,7 @@ app.get("/urls/new", (req, res) => {
 //browse the url database
 app.get("/urls", (req, res) => {
   const user = users[req.cookies["user_id"]]; //set user to get the id only instead of whole users object.
-  
-  
+    
   if(user){
     let privateDatabase = urlsForUser(user.id)
     const templateVars = { urls : privateDatabase, user: user["email"]  }//this makes an object called urls with a single object with the data from the urlDatabase.
@@ -177,7 +179,6 @@ app.get("/urls", (req, res) => {
   } else {
     res.status(403)
     res.redirect("/login")
-    
   }
 });
 
