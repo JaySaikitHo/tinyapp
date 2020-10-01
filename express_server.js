@@ -201,12 +201,14 @@ app.get("/u/:shortURL", (req, res) => {
 //edit the longURL 
 app.post("/urls/:shortURL", (req, res) =>{
   const user = users[req.cookies["user_id"]]
- 
+ if(user){
   const tinyURL = req.params.shortURL;
   const newName = req.body.longURL;
   urlDatabase[tinyURL] = newName;
   res.redirect("/urls");
-  
+ } else {
+   res.send("You don't have permission to do that")
+ }
 });
 //delete an URL
 app.post("/urls/:url/delete", (req, res) => {
