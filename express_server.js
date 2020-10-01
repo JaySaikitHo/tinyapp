@@ -113,30 +113,39 @@ let userPassword = req.body.password;
     const userId = generateRandomString();
     users[userId] = {id: userId, email: userEmail, password: userPassword};
     res.cookie("user_id", userId)
-  
-  
-  res.redirect("/urls");
+    res.redirect("/urls");
   }
 })
 
 //creating a new url
 app.post("/urls", (req, res) => {
-  // console.log(req.body);  // Log the POST request body to the console
- 
-  let randomString = generateRandomString() // to generate a random id
-  const fullURL = req.body.longURL
-  const templateVars = { shortURL: randomString, longURL: fullURL}   // don't need params because it is coming from the body not the browser      
-  
-  urlDatabase[templateVars.shortURL] = templateVars.longURL;
- 
-  res.redirect(`/urls/${templateVars.shortURL}`)
+  console.log("req.body.user", req.body.user);
+
+  const user = users[req.cookies["user_id"]];
+
+  if(user){
+    let randomString = generateRandomString() // to generate a random id
+    const fullURL = req.body.longURL
+    const templateVars = { shortURL: randomString, longURL: fullURL}   // don't need params because it is coming from the body not the browser      
+    urlDatabase[templateVars.shortURL] = templateVars.longURL;
+    res.redirect(`/urls/${templateVars.shortURL}`)
+  } else {
+    res.status(403).send("you don't have permission to do that")
+  }
+
 });
 
 //goes to the form for creating a new URL
 app.get("/urls/new", (req, res) => {
+  
   const user = users[req.cookies["user_id"]];
-  const templateVars = { user: user["email"] } ;
-  res.render("urls_new", templateVars);
+
+  if(user){
+    const templateVars = { user: user["email"] } ;
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login")
+  }
 });
 
 
@@ -145,12 +154,12 @@ app.get("/urls", (req, res) => {
   const user = users[req.cookies["user_id"]];
   //set user to get the id only instead of whole users object.
   if(user){
-  const templateVars = { urls : urlDatabase, user: user["email"]  }//this makes an object called urls with a single object with the data from the urlDatabase.
-  // console.log(templateVars);
-  res.render("urls_index", templateVars)
-} else {
-  res.status(403).send("You are not logged in")
-}
+    const templateVars = { urls : urlDatabase, user: user["email"]  }//this makes an object called urls with a single object with the data from the urlDatabase.
+    // console.log(templateVars);
+    res.render("urls_index", templateVars)
+  } else {
+    res.status(403).send("You are not logged in")
+  }
 });
 
 
