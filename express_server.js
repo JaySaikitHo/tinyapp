@@ -33,12 +33,26 @@ const checkEmail = function (usersDb, inputEmail){
 //check if password and email match at login
 const getLoginUser = function (usersDB,logInName,loginPassWord){
   for(let key in usersDB){
-    if(usersDB[key].password === loginPassWord && checkEmail(usersDB,logInName)){
-      return usersDB[key];
+    if(usersDB[key].email === logInName && usersDB[key].password === loginPassWord){
+       return usersDB[key];
     }
   }
   return null;
 }
+
+//check ids of users and urls to return an object with only urls the user created
+const urlsForUser = function(id){
+     
+  let privateDatabase = {};
+    for(let key in urlDatabase){
+       if(urlDatabase[key].UserID === id){
+        
+        privateDatabase[key] = urlDatabase[key];
+      }   
+    } 
+  return privateDatabase;  
+}
+ 
 //seed data for user database
 const users = { 
   "userRandomID": {
@@ -49,20 +63,20 @@ const users = {
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: "123"
   }
 }
 //seed data for URL database
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {longURL: "http://www.lighthouselabs.ca", UserID: "userRandomID"}, 
+  "9sm5xK": {longURL: "http://www.google.com", UserID: "user2RandomID"}
 };
 //landing page
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-
+//render log in page
 app.get("/login", (req, res) =>{
   const user = users[req.cookies["user_id"]];
   const templateVars = { user: user }
@@ -74,7 +88,7 @@ app.post("/login", (req,res) => {
   const logInName = req.body.username
   const loginPassWord = req.body.password
   const user = getLoginUser(users,logInName,loginPassWord)
-  // console.log(user)
+  console.log(user)
   if(user){
         
     res.cookie("user_id", user.id)
@@ -152,14 +166,18 @@ app.get("/urls/new", (req, res) => {
 
 //browse the url database
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  //set user to get the id only instead of whole users object.
+  const user = users[req.cookies["user_id"]]; //set user to get the id only instead of whole users object.
+  
+  
   if(user){
-    const templateVars = { urls : urlDatabase, user: user["email"]  }//this makes an object called urls with a single object with the data from the urlDatabase.
+    let privateDatabase = urlsForUser(user.id)
+    const templateVars = { urls : privateDatabase, user: user["email"]  }//this makes an object called urls with a single object with the data from the urlDatabase.
     // console.log(templateVars);
     res.render("urls_index", templateVars)
   } else {
-    res.status(403).send("You are not logged in")
+    res.status(403)
+    res.redirect("/login")
+    
   }
 });
 
@@ -168,7 +186,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const tinyURL = req.params.shortURL;
   const user = users[req.cookies["user_id"]];
-  const templateVars= { shortURL: tinyURL, longURL: urlDatabase[tinyURL], user: user["email"]  }
+  const templateVars= { shortURL: tinyURL, longURL: urlDatabase[tinyURL].longURL, user: user["email"] }
   res.render("urls_show", templateVars);
 });
 
@@ -176,23 +194,30 @@ app.get("/urls/:shortURL", (req, res) => {
 //redirect to the actual website from the shortened URL
 app.get("/u/:shortURL", (req, res) => {
   const tinyURL = req.params.shortURL;
-  const longURL = urlDatabase[tinyURL];
-  res.redirect(longURL);
+  const realURL = urlDatabase[tinyURL].longURL;
+  res.redirect(realURL);
 });
+
 //edit the longURL 
 app.post("/urls/:shortURL", (req, res) =>{
+  const user = users[req.cookies["user_id"]]
+ 
   const tinyURL = req.params.shortURL;
   const newName = req.body.longURL;
   urlDatabase[tinyURL] = newName;
-  
   res.redirect("/urls");
+  
 });
 //delete an URL
 app.post("/urls/:url/delete", (req, res) => {
-  
+  const user = users[req.cookies["user_id"]]
+  if(user){
   delete urlDatabase[req.params.url]
   
   res.redirect("/urls")
+  } else {
+    res.send("You don't have permissiont to do that")
+  }
 })
 
 app.listen(PORT, () => {
