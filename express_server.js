@@ -44,7 +44,7 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: "123"
   },
  "user2RandomID": {
     id: "user2RandomID", 
@@ -119,16 +119,17 @@ let userPassword = req.body.password;
 
 //creating a new url
 app.post("/urls", (req, res) => {
-  console.log("req.body.user", req.body.user);
-
   const user = users[req.cookies["user_id"]];
-
+  console.log(user)
   if(user){
     let randomString = generateRandomString() // to generate a random id
     const fullURL = req.body.longURL
-    const templateVars = { shortURL: randomString, longURL: fullURL}   // don't need params because it is coming from the body not the browser      
-    urlDatabase[templateVars.shortURL] = templateVars.longURL;
+    const templateVars = { shortURL: randomString, longURL: fullURL }   // don't need params because it is coming from the body not the browser      
+    urlDatabase[templateVars.shortURL] = {longURL: templateVars.longURL, UserID: user["id"]}
+
+    console.log(urlDatabase)
     res.redirect(`/urls/${templateVars.shortURL}`)
+  
   } else {
     res.status(403).send("you don't have permission to do that")
   }
