@@ -21,13 +21,23 @@ const generateRandomString = function(){
   return random;
 }
 //check if email is already registered
-const checkRegisteredEmail = function (usersDb, userEmail){
+const checkEmail = function (usersDb, inputEmail){
   for (let key in usersDb){
-    if(usersDb[key].email === userEmail ){
+      if(usersDb[key].email === inputEmail){
       return true;
     }
   }
   return false;
+}
+
+//check if password and email match at login
+const getLoginUser = function (usersDB,logInName,loginPassWord){
+  for(let key in usersDB){
+    if(usersDB[key].password === loginPassWord && checkEmail(usersDB,logInName)){
+      return usersDB[key];
+    }
+  }
+  return null;
 }
 //seed data for user database
 const users = { 
@@ -52,52 +62,67 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
+
+app.get("/login", (req, res) =>{
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { user: user }
+    res.render("urls_login",templateVars)
+})
 
 //login
 app.post("/login", (req,res) => {
-  // const logInName = req.body.username
-  // console.log(logInName)
-  // res.cookie("username", logInName )
-  res.redirect("/login")
+  const logInName = req.body.username
+  const loginPassWord = req.body.password
+  const user = getLoginUser(users,logInName,loginPassWord)
+  // console.log(user)
+  if(user){
+        
+    res.cookie("user_id", user.id)
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("User and or password do not match")
+    
+  }  
 });
 
 //logout
 app.post("/logout",(req,res) => {
-console.log(req.body.userEmail)
+
 res.clearCookie("user_id");
 res.redirect("/urls");
 })
 
-//sign up route
+//register route
 app.get("/register",(req,res) => {
-res.render("urls_register");
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { user: user }
+  res.render("urls_register", templateVars);
 })
 
 //registering user
 app.post("/register",(req,res) => {
+
 let userEmail = req.body.email;
 let userPassword = req.body.password;
   if(!userEmail || !userPassword){
      res.status(400).send("Invalid email or password");
-  } else if(checkRegisteredEmail(users, userEmail)){
+  } else if(checkEmail(users, userEmail)){
     res.status(400).send("Email already taken");
+        
   } else {
-
-  let userId = generateRandomString();
-  users[userId] = {id: userId, email: userEmail, password: userPassword};
-  res.cookie("user_id", userId );
-  res.redirect('/urls');
-  console.log(users)
+    const userId = generateRandomString();
+    users[userId] = {id: userId, email: userEmail, password: userPassword};
+    res.cookie("user_id", userId)
+  
+  
+  res.redirect("/urls");
   }
 })
 
 //creating a new url
 app.post("/urls", (req, res) => {
   // console.log(req.body);  // Log the POST request body to the console
-  // res.send("Ok");// Respond with 'Ok' (we will replace this)
+ 
   let randomString = generateRandomString() // to generate a random id
   const fullURL = req.body.longURL
   const templateVars = { shortURL: randomString, longURL: fullURL}   // don't need params because it is coming from the body not the browser      
@@ -109,26 +134,34 @@ app.post("/urls", (req, res) => {
 
 //goes to the form for creating a new URL
 app.get("/urls/new", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]] }
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { user: user["email"] } ;
   res.render("urls_new", templateVars);
 });
-// username: req.cookies["username"] before we used the users object
+
 
 //browse the url database
 app.get("/urls", (req, res) => {
-  const templateVars = { urls : urlDatabase, user: users[req.cookies["user_id"]]  }//this makes an object called urls with a single object with the data from the urlDatabase.
+  const user = users[req.cookies["user_id"]];
+  //set user to get the id only instead of whole users object.
+  if(user){
+  const templateVars = { urls : urlDatabase, user: user["email"]  }//this makes an object called urls with a single object with the data from the urlDatabase.
   // console.log(templateVars);
   res.render("urls_index", templateVars)
+} else {
+  res.status(403).send("You are not logged in")
+}
 });
-// username: req.cookies["username"] before we used the users object
+
 
 //read a specific url
 app.get("/urls/:shortURL", (req, res) => {
   const tinyURL = req.params.shortURL;
-  const templateVars= { shortURL: tinyURL, longURL: urlDatabase[tinyURL], user: users[req.cookies["user_id"]]  }
+  const user = users[req.cookies["user_id"]];
+  const templateVars= { shortURL: tinyURL, longURL: urlDatabase[tinyURL], user: user["email"]  }
   res.render("urls_show", templateVars);
 });
-// username: req.cookies["username"] before we used the users object
+
 
 //redirect to the actual website from the shortened URL
 app.get("/u/:shortURL", (req, res) => {
@@ -141,15 +174,14 @@ app.post("/urls/:shortURL", (req, res) =>{
   const tinyURL = req.params.shortURL;
   const newName = req.body.longURL;
   urlDatabase[tinyURL] = newName;
-  // console.log(req.params.shortURL)
-  // console.log(req.body.longURL)
+  
   res.redirect("/urls");
 });
 //delete an URL
 app.post("/urls/:url/delete", (req, res) => {
   
   delete urlDatabase[req.params.url]
-  // console.log(urlDatabase)
+  
   res.redirect("/urls")
 })
 
