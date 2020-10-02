@@ -23,7 +23,7 @@ app.set("view engine", "ejs");
 
 
 //check ids of users and urls to return an object with only urls the user created
-const urlsForUser = function (id) {
+const urlsForUser = function(id) {
 
   let privateDatabase = {};
   for (let key in urlDatabase) {
@@ -56,10 +56,10 @@ const urlDatabase = {
 //landing page
 app.get("/", (req, res) => {
   const user = users[req.session.user_id];
-  if(!user) {
-  res.redirect("/login");
+  if (!user) {
+    res.redirect("/login");
   } else {
-  res.redirect("/urls");
+    res.redirect("/urls");
   }
 });
 
@@ -137,7 +137,7 @@ app.post("/urls", (req, res) => {
   if (user) {
     let randomString = generateRandomString(); // to generate a random id for the URLdatabase
     const fullURL = req.body.longURL;
-    const templateVars = { shortURL: randomString, longURL: fullURL };   // don't need params because it is coming from the body not the browser      
+    const templateVars = { shortURL: randomString, longURL: fullURL };
     urlDatabase[templateVars.shortURL] = { longURL: templateVars.longURL, urlID: user["id"] };
     res.redirect(`/urls/${templateVars.shortURL}`);
 
@@ -210,7 +210,7 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
-//edit the longURL 
+//edit the URL
 app.post("/urls/:shortURL", (req, res) => {
   const user = users[req.session.user_id];
   if (user) {
