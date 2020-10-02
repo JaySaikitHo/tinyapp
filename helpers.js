@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+
 
 //random string generator for id
 const generateRandomString = function(){
@@ -20,17 +20,6 @@ const getUserByEmail = function (usersDB,email){
 }
 
 
-//check ids of users and urls to return an object with only urls the user created
-const urlsForUser = function(id){
-     
-  let privateDatabase = {};
-    for(let key in urlDatabase){
-       if(urlDatabase[key].urlID === id){
-        
-        privateDatabase[key] = urlDatabase[key];
-      }   
-    } 
-  return privateDatabase;  
-}
+
 
 module.exports = {generateRandomString,getUserByEmail}
