@@ -23,7 +23,7 @@ app.set("view engine", "ejs");
 
 
 //check ids of users and urls to return an object with only urls the user created
-const urlsForUser = function(id) {
+const urlsForUser = function (id) {
 
   let privateDatabase = {};
   for (let key in urlDatabase) {
@@ -198,15 +198,12 @@ app.get("/urls/:shortURL", (req, res) => {
 //redirect to the actual website from the shortened URL
 app.get("/u/:shortURL", (req, res) => {
   const tinyURL = req.params.shortURL;
-  for (let key in urlDatabase) {
-    console.log(key);
-    if (key !== tinyURL) {
-      res.render("urls_error");
-
-    } else {
-      const realURL = urlDatabase[tinyURL].longURL;
-      res.redirect(realURL);
-    }
+  
+  if(urlDatabase.hasOwnProperty(tinyURL)) {
+    const realURL = urlDatabase[tinyURL].longURL;
+    res.redirect(realURL);
+  } else {
+    res.render("urls_error");
   }
 });
 
@@ -217,7 +214,7 @@ app.post("/urls/:shortURL", (req, res) => {
     const tinyURL = req.params.shortURL;
     const newName = req.body.longURL;
     urlDatabase[tinyURL].longURL = newName;
-    res.redirect("/urls");
+    res.render("/urls");
   } else {
     res.send("You don't have permission to edit the URL");
   }
