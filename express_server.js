@@ -180,6 +180,12 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const tinyURL = req.params.shortURL;
   const user = users[req.session.user_id];
+  
+  if(!urlDatabase.hasOwnProperty(tinyURL)) {
+        res.render("urls_error");
+  }
+  
+
   if (user) {
 
     if (user.id !== urlDatabase[tinyURL].urlID) {
@@ -214,7 +220,7 @@ app.post("/urls/:shortURL", (req, res) => {
     const tinyURL = req.params.shortURL;
     const newName = req.body.longURL;
     urlDatabase[tinyURL].longURL = newName;
-    res.render("/urls");
+    res.redirect("/urls");
   } else {
     res.send("You don't have permission to edit the URL");
   }

@@ -1,7 +1,7 @@
 
 
 //random string generator for id
-const generateRandomString = function(){
+function generateRandomString (){
   let random = "";
   const characters = 'abcdefghijklmnopqrstuvwxyz1234567890'
   for (let i = 0; i < 6; i++){
@@ -10,7 +10,7 @@ const generateRandomString = function(){
   return random;
 }
 //check if the user's email exists in the user database
-const getUserByEmail = function (usersDB,email){
+function getUserByEmail (usersDB,email){
   for(let key in usersDB){
     if(usersDB[key].email === email ){
        return usersDB[key];
