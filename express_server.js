@@ -125,8 +125,7 @@ app.post("/register", (req, res) => {
   } else {
     const userId = generateRandomString(); //generate a random string for the user object
     users[userId] = { id: userId, email: userEmail, password: hashedPassword };
-
-    req.session.user_id = users[userId].id;
+    req.session.user_id = users[userId].id;   
     res.redirect("/urls");
   }
 });
@@ -182,10 +181,9 @@ app.get("/urls/:shortURL", (req, res) => {
   const user = users[req.session.user_id];
   
   if(!urlDatabase.hasOwnProperty(tinyURL)) {
-        res.render("urls_error");
+       return res.render("urls_error");
   }
   
-
   if (user) {
 
     if (user.id !== urlDatabase[tinyURL].urlID) {
@@ -216,25 +214,39 @@ app.get("/u/:shortURL", (req, res) => {
 //edit the URL
 app.post("/urls/:shortURL", (req, res) => {
   const user = users[req.session.user_id];
+  const tinyURL = req.params.shortURL;
+  const newName = req.body.longURL;
   if (user) {
-    const tinyURL = req.params.shortURL;
-    const newName = req.body.longURL;
-    urlDatabase[tinyURL].longURL = newName;
-    res.redirect("/urls");
+      if (user.id === urlDatabase[tinyURL].urlID) {
+      
+      urlDatabase[tinyURL].longURL = newName;
+      res.redirect("/urls");
+    } else {
+     return res.send("You don't have permission to edit the URL");
+    }
+    
   } else {
-    res.send("You don't have permission to edit the URL");
+    return res.send("You need to be logged in to do that")
   }
+
 });
 
 //delete an URL
-app.post("/urls/:url/delete", (req, res) => {
+app.post("/urls/:shortURL/delete", (req, res) => {
   const user = users[req.session.user_id];
+  const tinyURL = req.params.shortURL;
+  
   if (user) {
-    delete urlDatabase[req.params.url];
+    if (user.id === urlDatabase[tinyURL].urlID) {
+      
+      delete urlDatabase[tinyURL];
 
     res.redirect("/urls");
   } else {
     res.send("You don't have permission to delete this URL");
+  }
+  } else {
+    res.send("You need to be logged in to do that")
   }
 });
 
